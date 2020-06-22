@@ -20,6 +20,7 @@ import * as pathIsInside from 'path-is-inside';
 import * as prettyBytes from 'pretty-bytes';
 
 import * as messages from './messages';
+import { SourceMetadata } from '../gui/app/components/source-selector/source-selector';
 
 /**
  * @summary The default unknown size for things such as images and drives
@@ -58,13 +59,23 @@ export interface Image {
  * In the context of Etcher, a source drive is a drive
  * containing the image.
  */
-export function isSourceDrive(
+export function isSelectionSourceDrive(
 	drive: DrivelistDrive,
-	image: Image = {},
+	selection: SourceMetadata,
 ): boolean {
-	for (const mountpoint of drive.mountpoints || []) {
-		if (image.path !== undefined && pathIsInside(image.path, mountpoint.path)) {
-			return true;
+	if (selection && selection.drive) {
+		const selectionDevice =
+			selection.drive.devicePath || selection.drive.device;
+		if (selectionDevice) {
+			return pathIsInside(selectionDevice, drive.devicePath || drive.device);
+		}
+		for (const mountpoint of drive.mountpoints || []) {
+			if (
+				selection.path !== undefined &&
+				pathIsInside(selection.path, mountpoint.path)
+			) {
+				return true;
+			}
 		}
 	}
 	return false;
@@ -112,7 +123,7 @@ export function isDriveValid(drive: DrivelistDrive, image: Image): boolean {
 	return (
 		!isDriveLocked(drive) &&
 		isDriveLargeEnough(drive, image) &&
-		!isSourceDrive(drive, image) &&
+		!isSelectionSourceDrive(drive, image as SourceMetadata) &&
 		!isDriveDisabled(drive)
 	);
 }
@@ -191,7 +202,7 @@ export function getDriveImageCompatibilityStatuses(
 			message: messages.compatibility.tooSmall(prettyBytes(relativeBytes)),
 		});
 	} else {
-		if (isSourceDrive(drive, image)) {
+		if (isSelectionSourceDrive(drive, image as SourceMetadata)) {
 			statusList.push({
 				type: COMPATIBILITY_STATUS_TYPES.ERROR,
 				message: messages.compatibility.containsImage(),

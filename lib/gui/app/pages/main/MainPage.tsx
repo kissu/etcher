@@ -129,7 +129,7 @@ export class MainPage extends React.Component<
 			isWebviewShowing: false,
 			hideSettings: true,
 			source: {
-				imagePath: '',
+				sourcePath: '',
 				SourceType: sourceDestination.File,
 			},
 			...this.stateHelper(),

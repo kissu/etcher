@@ -25,7 +25,10 @@ import * as path from 'path';
 import * as packageJSON from '../../../../package.json';
 import * as errors from '../../../shared/errors';
 import * as permissions from '../../../shared/permissions';
-import { SourceOptions } from '../components/source-selector/source-selector';
+import {
+	SourceOptions,
+	SourceMetadata,
+} from '../components/source-selector/source-selector';
 import * as flashState from '../models/flash-state';
 import * as selectionState from '../models/selection-state';
 import * as settings from '../models/settings';
@@ -137,7 +140,7 @@ interface FlashResults {
  * This function is extracted for testing purposes.
  */
 export async function performWrite(
-	image: string,
+	image: SourceMetadata,
 	drives: DrivelistDrive[],
 	onProgress: sdk.multiWrite.OnProgressFunction,
 	source: SourceOptions,
@@ -195,7 +198,7 @@ export async function performWrite(
 
 		ipc.server.on('ready', (_data, socket) => {
 			ipc.server.emit(socket, 'write', {
-				imagePath: image,
+				image,
 				destinations: drives,
 				source,
 				SourceType: source.SourceType.name,
@@ -258,7 +261,7 @@ export async function performWrite(
  * @summary Flash an image to drives
  */
 export async function flash(
-	image: string,
+	image: SourceMetadata,
 	drives: DrivelistDrive[],
 	source: SourceOptions,
 ): Promise<void> {

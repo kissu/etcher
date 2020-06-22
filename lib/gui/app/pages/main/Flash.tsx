@@ -99,7 +99,7 @@ async function flashImageToDrive(
 	const iconPath = path.join('media', 'icon.png');
 	const basename = path.basename(image.path);
 	try {
-		await imageWriter.flash(image.path, drives, sourceOptions);
+		await imageWriter.flash(image, drives, sourceOptions);
 		if (!flashState.wasLastFlashCancelled()) {
 			const flashResults: any = flashState.getFlashResults();
 			notification.send(

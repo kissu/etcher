@@ -18,7 +18,7 @@ import { Drive as DrivelistDrive } from 'drivelist';
 import * as _ from 'lodash';
 import { AnimationFunction, Color, RGBLed } from 'sys-class-rgb-led';
 
-import { isSourceDrive } from '../../../shared/drive-constraints';
+import { isSelectionSourceDrive } from '../../../shared/drive-constraints';
 import * as settings from './settings';
 import { DEFAULT_STATE, observe } from './store';
 
@@ -173,7 +173,7 @@ function stateObserver(state: typeof DEFAULT_STATE) {
 		(d: DeviceFromState) => d.devicePath,
 	);
 	const sourceDrivePath = availableDrives.filter((d: DrivelistDrive) =>
-		isSourceDrive(d, s.selection.image),
+		isSelectionSourceDrive(d, s.selection.image),
 	)[0]?.devicePath;
 	const availableDrivesPaths = availableDrives.map(
 		(d: DeviceFromState) => d.devicePath,
