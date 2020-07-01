@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 
-import { faFile, faLink } from '@fortawesome/free-solid-svg-icons';
+import {
+	faFile,
+	faLink,
+	faExclamationTriangle,
+} from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { sourceDestination } from 'etcher-sdk';
 import { ipcRenderer, IpcRendererEvent } from 'electron';
@@ -22,7 +26,14 @@ import * as _ from 'lodash';
 import { GPTPartition, MBRPartition } from 'partitioninfo';
 import * as path from 'path';
 import * as React from 'react';
-import { ButtonProps, Card as BaseCard, Input, Modal, Txt } from 'rendition';
+import {
+	ButtonProps,
+	Card as BaseCard,
+	Input,
+	Modal as SmallModal,
+	Txt,
+	Flex,
+} from 'rendition';
 import styled from 'styled-components';
 
 import * as errors from '../../../../shared/errors';
@@ -38,6 +49,7 @@ import { replaceWindowsNetworkDriveLetter } from '../../os/windows-network-drive
 import {
 	ChangeButton,
 	DetailsText,
+	Modal,
 	StepButton,
 	StepNameButton,
 } from '../../styled-components';
@@ -103,7 +115,13 @@ function getState() {
 	};
 }
 
-const URLSelector = ({ done }: { done: (imageURL: string) => void }) => {
+const URLSelector = ({
+	done,
+	cancel,
+}: {
+	done: (imageURL: string) => void;
+	cancel: () => void;
+}) => {
 	const [imageURL, setImageURL] = React.useState('');
 	const [recentImages, setRecentImages]: [
 		string[],
@@ -119,8 +137,9 @@ const URLSelector = ({ done }: { done: (imageURL: string) => void }) => {
 	}, []);
 	return (
 		<Modal
+			cancel={cancel}
 			primaryButtonProps={{
-				disabled: loading,
+				disabled: loading || !imageURL,
 			}}
 			done={async () => {
 				setLoading(true);
@@ -132,8 +151,8 @@ const URLSelector = ({ done }: { done: (imageURL: string) => void }) => {
 				await done(imageURL);
 			}}
 		>
-			<label style={{ width: '100%' }}>
-				<Txt mb="10px" fontSize="20px">
+			<Flex style={{ width: '100%' }} flexDirection="column">
+				<Txt mb="10px" fontSize="24px">
 					Use Image URL
 				</Txt>
 				<Input
@@ -144,10 +163,10 @@ const URLSelector = ({ done }: { done: (imageURL: string) => void }) => {
 						setImageURL(evt.target.value)
 					}
 				/>
-			</label>
+			</Flex>
 			{!_.isEmpty(recentImages) && (
-				<div>
-					Recent
+				<Flex flexDirection="column">
+					<Txt fontSize={18}>Recent</Txt>
 					<Card
 						style={{ padding: '10px 15px' }}
 						rows={_.map(recentImages, (recent) => (
@@ -163,7 +182,7 @@ const URLSelector = ({ done }: { done: (imageURL: string) => void }) => {
 							</Txt>
 						))}
 					/>
-				</div>
+				</Flex>
 			)}
 		</Modal>
 	);
@@ -464,70 +483,67 @@ export class SourceSelector extends React.Component<
 
 		return (
 			<>
-				<div
-					className="box text-center relative"
+				<Flex
+					flexDirection="column"
+					alignItems="center"
 					onDrop={this.onDrop}
 					onDragEnter={this.onDragEnter}
 					onDragOver={this.onDragOver}
 				>
-					<div className="center-block">
-						<SVGIcon
-							contents={imageLogo}
-							fallback={<ImageSvg width="40px" height="40px" />}
-						/>
-					</div>
+					<SVGIcon
+						contents={imageLogo}
+						fallback={ImageSvg}
+						style={{
+							marginBottom: 30,
+						}}
+					/>
 
-					<div className="space-vertical-large">
-						{hasImage ? (
-							<>
-								<StepNameButton
-									plain
-									fontSize={16}
-									onClick={this.showSelectedImageDetails}
-									tooltip={imageName || imageBasename}
-								>
-									{middleEllipsis(imageName || imageBasename, 20)}
-								</StepNameButton>
-								{!flashing && (
-									<ChangeButton plain mb={14} onClick={this.reselectImage}>
-										Remove
-									</ChangeButton>
-								)}
-								<DetailsText>
-									{shared.bytesToClosestUnit(imageSize)}
-								</DetailsText>
-							</>
-						) : (
-							<>
-								<FlowSelector
-									key="Flash from file"
-									flow={{
-										onClick: this.openImageSelector,
-										label: 'Flash from file',
-										icon: <FontAwesomeIcon icon={faFile} />,
-									}}
-								/>
-								<FlowSelector
-									key="Flash from URL"
-									flow={{
-										onClick: this.openURLSelector,
-										label: 'Flash from URL',
-										icon: <FontAwesomeIcon icon={faLink} />,
-									}}
-								/>
-							</>
-						)}
-					</div>
-				</div>
+					{hasImage ? (
+						<>
+							<StepNameButton
+								plain
+								onClick={this.showSelectedImageDetails}
+								tooltip={imageName || imageBasename}
+							>
+								{middleEllipsis(imageName || imageBasename, 20)}
+							</StepNameButton>
+							{!flashing && (
+								<ChangeButton plain mb={14} onClick={this.reselectImage}>
+									Remove
+								</ChangeButton>
+							)}
+							<DetailsText>{shared.bytesToClosestUnit(imageSize)}</DetailsText>
+						</>
+					) : (
+						<>
+							<FlowSelector
+								key="Flash from file"
+								flow={{
+									onClick: this.openImageSelector,
+									label: 'Flash from file',
+									icon: <FontAwesomeIcon icon={faFile} />,
+								}}
+							/>
+							<FlowSelector
+								key="Flash from URL"
+								flow={{
+									onClick: this.openURLSelector,
+									label: 'Flash from URL',
+									icon: <FontAwesomeIcon icon={faLink} />,
+								}}
+							/>
+						</>
+					)}
+				</Flex>
 
 				{this.state.warning != null && (
-					<Modal
+					<SmallModal
 						titleElement={
 							<span>
-								<span
-									style={{ color: '#d9534f' }}
-									className="glyphicon glyphicon-exclamation-sign"
-								></span>{' '}
+								<FontAwesomeIcon
+									style={{ color: '#fca321' }}
+									icon={faExclamationTriangle}
+								/>{' '}
 								<span>{this.state.warning.title}</span>
 							</span>
 						}
@@ -544,11 +560,11 @@ export class SourceSelector extends React.Component<
 						<ModalText
 							dangerouslySetInnerHTML={{ __html: this.state.warning.message }}
 						/>
-					</Modal>
+					</SmallModal>
 				)}
 
 				{showImageDetails && (
-					<Modal
+					<SmallModal
 						title="Image"
 						done={() => {
 							this.setState({ showImageDetails: false });
@@ -562,11 +578,16 @@ export class SourceSelector extends React.Component<
 							<Txt.span bold>Path: </Txt.span>
 							<Txt.span>{imagePath}</Txt.span>
 						</Txt.p>
-					</Modal>
+					</SmallModal>
 				)}
 
 				{showURLSelector && (
 					<URLSelector
+						cancel={() => {
+							this.setState({
+								showURLSelector: false,
+							});
+						}}
 						done={async (imageURL: string) => {
 							// Avoid analytics and selection state changes
 							// if no file was resolved from the dialog.

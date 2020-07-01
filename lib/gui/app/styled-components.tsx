@@ -21,14 +21,29 @@ import {
 	Modal as ModalBase,
 	Provider,
 	Txt,
+	Flex,
+	FlexProps,
+	Theme as renditionTheme,
 } from 'rendition';
 import styled from 'styled-components';
 import { space } from 'styled-system';
 
 import { colors, theme } from './theme';
 
+const defaultTheme = {
+	...renditionTheme,
+	...theme,
+	layer: {
+		extend: () => `
+			> div:first-child {
+				background-color: transparent;
+			}
+		`,
+	},
+};
+
 export const ThemedProvider = (props: any) => (
-	<Provider theme={theme} {...props}></Provider>
+	<Provider theme={defaultTheme} {...props}></Provider>
 );
 
 export const BaseButton = styled(Button)`
@@ -54,7 +69,6 @@ export const StepButton = styled((props: ButtonProps) => (
 	<BaseButton {...props}></BaseButton>
 ))`
 	color: #ffffff;
-	margin: auto;
 `;
 
 export const ChangeButton = styled(Button)`
@@ -99,38 +113,60 @@ export const Footer = styled(Txt)`
 	font-size: 10px;
 `;
 
-export const Underline = styled(Txt.span)`
-	border-bottom: 1px dotted;
-	padding-bottom: 2px;
-`;
-
-export const DetailsText = styled(Txt.p)`
-	color: ${colors.dark.disabled.foreground};
-	margin-bottom: 0;
-`;
+export const DetailsText = (props: FlexProps) => (
+	<Flex
+		alignItems="center"
+		color={colors.dark.disabled.foreground}
+		{...props}
+	/>
+);
 
 export const Modal = styled((props) => {
+	const { style = { height: 420 } } = props;
 	return (
-		<ModalBase
-			cancelButtonProps={{
-				style: {
-					marginRight: '20px',
-					border: 'solid 1px #2a506f',
+		<Provider
+			theme={{
+				...defaultTheme,
+				header: {
+					height: '50px',
+				},
+				layer: {
+					extend: () => `
+					${defaultTheme.layer.extend()}
+
+					> div:last-child {
+						top: 0;
+					}
+				`,
 				},
 			}}
-			{...props}
-		/>
+		>
+			<ModalBase
+				position="top"
+				width={780}
+				cancelButtonProps={{
+					style: {
+						marginRight: '20px',
+						border: 'solid 1px #2a506f',
+					},
+				}}
+				style={style}
+				{...props}
+			/>
+		</Provider>
 	);
 })`
 	> div {
 		padding: 30px;
 		height: calc(100% - 80px);
+		overflow-y: auto;
 
 		> h3 {
 			margin: 0;
 		}
 
 		> div:last-child {
+			border-radius: 0 0 7px 7px;
 			height: 80px;
 			background-color: #fff;
 			justify-content: center;
