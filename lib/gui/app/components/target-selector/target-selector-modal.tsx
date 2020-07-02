@@ -378,7 +378,7 @@ export class TargetSelectorModal extends React.Component<
 				action={`Select (${selectedList.length})`}
 				style={{
 					width: '780px',
-					height: '420px',
+					height: '86vh',
 				}}
 				primaryButtonProps={{
 					primary: !hasStatus,
@@ -399,11 +399,7 @@ export class TargetSelectorModal extends React.Component<
 							<b>Plug a target drive</b>
 						</Flex>
 					) : (
-						<ScrollableFlex
-							flexDirection="column"
-							width="100%"
-							height="calc(100% - 15px)"
-						>
+						<ScrollableFlex flexDirection="column" width="100%" height="91.3%">
 							<TargetsTable
 								refFn={(t: Table<Target>) => {
 									if (t !== null) {
