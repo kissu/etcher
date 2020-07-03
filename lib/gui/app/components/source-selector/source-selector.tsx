@@ -22,7 +22,6 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { sourceDestination } from 'etcher-sdk';
 import { ipcRenderer, IpcRendererEvent } from 'electron';
-import * as _ from 'lodash';
 import { GPTPartition, MBRPartition } from 'partitioninfo';
 import * as path from 'path';
 import * as React from 'react';
@@ -61,16 +60,16 @@ import ImageSvg from '../../../assets/image.svg';
 
 const recentUrlImagesKey = 'recentUrlImages';
 
-function normalizeRecentUrlImages(urls: any): string[] {
-	if (!Array.isArray(urls)) {
-		urls = [];
+function normalizeRecentUrlImages(urlImages: any): string[] {
+	if (!Array.isArray(urlImages)) {
+		urlImages = [];
 	}
-	return _.chain(urls)
-		.filter(_.isString)
-		.reject(_.isEmpty)
-		.uniq()
-		.takeRight(5)
-		.value();
+	return urlImages
+		.filter((url: any) => typeof url === 'string')
+		.filter((url: string) => url !== '')
+		.filter((url: string, i: number, urls: string[]) => urls.indexOf(url) === i) // Deduplicate
+		.reverse()
+		.slice(0, 5);
 }
 
 function getRecentUrlImages(): string[] {
@@ -140,6 +139,9 @@ const URLSelector = ({
 			cancel={cancel}
 			primaryButtonProps={{
 				disabled: loading || !imageURL,
+				style: {
+					display: imageURL ? 'block' : 'none',
+				},
 			}}
 			done={async () => {
 				setLoading(true);
@@ -164,12 +166,12 @@ const URLSelector = ({
 					}
 				/>
 			</Flex>
-			{!_.isEmpty(recentImages) && (
+			{recentImages.length > 0 && (
 				<Flex flexDirection="column">
 					<Txt fontSize={18}>Recent</Txt>
 					<Card
 						style={{ padding: '10px 15px' }}
-						rows={_.map(recentImages, (recent) => (
+						rows={recentImages.map((recent) => (
 							<Txt
 								key={recent}
 								onClick={() => {
@@ -177,7 +179,8 @@ const URLSelector = ({
 								}}
 							>
 								<span>
-									{_.last(_.split(recent, '/'))} - {recent}
+									{middleEllipsis(recent.split('/').pop() || '', 45)} -{' '}
+									{middleEllipsis(recent, 45)}
 								</span>
 							</Txt>
 						))}
@@ -280,7 +283,7 @@ export class SourceSelector extends React.Component<
 
 	private async onSelectImage(_event: IpcRendererEvent, imagePath: string) {
 		const isURL =
-			_.startsWith(imagePath, 'https://') || _.startsWith(imagePath, 'http://');
+			imagePath.startsWith('https://') || imagePath.startsWith('http://');
 		await this.selectImageByPath({
 			imagePath,
 			SourceType: isURL ? sourceDestination.Http : sourceDestination.File,
@@ -354,8 +357,8 @@ export class SourceSelector extends React.Component<
 			});
 		} else {
 			if (
-				!_.startsWith(imagePath, 'https://') &&
-				!_.startsWith(imagePath, 'http://')
+				!imagePath.startsWith('https://') &&
+				!imagePath.startsWith('http://')
 			) {
 				const invalidImageError = errors.createUserError({
 					title: 'Unsupported protocol',
